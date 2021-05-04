@@ -60,7 +60,7 @@ class PrimeGovScraper(object):
         """
         pagelinks_xpath = "//*[@id='2021Meetings_paginate']/span/a"
         pagelinks = driver.find_elements_by_xpath(pagelinks_xpath)
-        pagelinks = pagelinks[:int(len(pagelinks) / 2)]
+        pagelinks = pagelinks[:int(len(pagelinks))]
         return [l.text for l in pagelinks], pagelinks
 
     def _get_page_signature(self):
@@ -212,7 +212,7 @@ class PrimeGovScraper(object):
     def extract_table_data(
             self,
             page_source,
-            table_id='#ctl00_ContentPlaceHolder1_gridCalendar_ctl00'
+            table_id='#\\32 021Meetings'
     ):
         """
 
@@ -230,7 +230,7 @@ class PrimeGovScraper(object):
         header_data = [
             ''.join(cell.stripped_strings) for cell in table.find_all('th')
         ]
-        header_data = [h for h in header_data if h != 'Data pager']
+        header_data = [h for h in header_data if h != 'Data pager']  # Copied Code Data Pager doesn't seem to exist
         num_cols = len(header_data)
         # num_cols = int(table.td.get('colspan'))
 
