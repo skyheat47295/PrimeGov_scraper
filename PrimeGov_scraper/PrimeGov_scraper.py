@@ -21,7 +21,7 @@ class PrimeGovScraper(object):
             city_name,
             scrape_url,
             base_url=None,
-            headless=False,
+            headless=True,
     ):
         """
         Initialize a scraper instance.
@@ -231,7 +231,7 @@ class PrimeGovScraper(object):
             ''.join(cell.stripped_strings) for cell in table.find_all('th')
         ]
         header_data = [h for h in header_data if h != 'Data pager']  # Copied Code Data Pager doesn't seem to exist
-        header_data.extend(['Agenda', 'Minutes', 'Packet', 'Video']) # TODO Make duplicate rows instead
+        # header_data.extend(['Agenda', 'Minutes', 'Packet', 'Video']) # TODO Make duplicate rows instead
         num_cols = len(header_data)
         # num_cols = int(table.td.get('colspan'))
 
@@ -250,7 +250,7 @@ class PrimeGovScraper(object):
                     url_data.append(row_url)
 
         # turn into dataframe
-        num_cols = table.td.get('colspan')
+        # num_cols = table.td.get('colspan') #  TODO Doesn't seem to be used
         # text_df = pd.DataFrame(text_data, columns=header_data)
         text_df = pd.DataFrame(text_data)
         # url_df = pd.DataFrame(url_data, columns=header_data)
