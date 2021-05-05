@@ -227,20 +227,31 @@ class PrimeGovScraper(object):
         table = soup.select(table_id)[0]
 
         # extract column headers
-        header_data = [
-            ''.join(cell.stripped_strings) for cell in table.find_all('th')
-        ]
-        header_data = [h for h in header_data if h != 'Data pager']  # Copied Code Data Pager doesn't seem to exist
+        # header_data = [
+        #     ''.join(cell.stripped_strings) for cell in table.find_all('th')
+        # ]
+        # header_data = [h for h in header_data if h != 'Data pager']  # Copied Code Data Pager doesn't seem to exist
         # header_data.extend(['Agenda', 'Minutes', 'Packet', 'Video']) # TODO Make duplicate rows instead
+        header_data = \
+            ['Meeting', 'Date', 'AgendaMinutesPacketVideo',
+             '4', 'Agenda', '6', '7', '8', 'Minutes', '10',
+             '11', '12', 'Packet', '14', '15', '16', 'Video', '18']  # TODO automate
         num_cols = len(header_data)
-        # num_cols = int(table.td.get('colspan'))
+        # num_cols = int(table.td.get('colspan')) # TODO remove line
 
         # extract text and URL data from table
         text_data, url_data = [], []
         for row in table.find_all('tr'):
             row_text, row_url = [], []
-            for td in row.find_all('td'):
-                row_text.append(''.join(td.stripped_strings))
+            for i, td in enumerate(row.find_all('td')):
+                if i < 2:
+                    row_text.append(''.join(td.stripped_strings))
+                    row_url.append(nan)
+                    continue
+                if td.find('td') is not None:
+                    row_text.append(''.join(td.stripped_strings))
+                else:
+                    row_text.append(nan)
                 if td.find('a') and (td.a.get('href') is not None):
                     row_url.append(self.base_url + td.a.get('href'))
                 else:
