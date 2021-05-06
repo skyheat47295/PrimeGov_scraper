@@ -243,22 +243,25 @@ class PrimeGovScraper(object):
         text_data, url_data = [], []
         for row in table.find_all('tr'):
             row_text, row_url = [], []
-            for i, td in enumerate(row.find_all('td')):
-                if i < 2:
-                    row_text.append(''.join(td.stripped_strings))
-                    row_url.append(nan)
-                    continue
-                if td.find('td') is not None:
-                    row_text.append(''.join(td.stripped_strings))
-                else:
-                    row_text.append(nan)
+            for index, td in enumerate(row.find_all('td')):
+                row_text.append(''.join(td.stripped_strings))
+                if index == 4 and 'Notice of Cancellation' in td.text:
+                    row_text.extend(['', '', '', '', ''])  # Pad out Cancellation record
+                elif index == 8 and td.text == 'Packet':  # Missing Minutes
+                    row_text[index] = 'Minutes'
+                    row_text.extend(['', '', ''])  # Pad out for blank fields
+                elif index == 12 and td.text == 'Video':  # Missing Packet
+                    row_text[index] = 'Packet'
+                    row_text.extend(['', '', ''])  # Pad out for blank fields
+                elif index == 16 and td.text == '':  # Missing Video
+                    row_text.extend(['', ''])  # Pad out for blank fields
                 if td.find('a') and (td.a.get('href') is not None):
                     row_url.append(self.base_url + td.a.get('href'))
                 else:
                     row_url.append(nan)
-                if len(row_text) == num_cols and len(row_url) == num_cols:
-                    text_data.append(row_text)
-                    url_data.append(row_url)
+                #if len(row_text) == num_cols and len(row_url) == num_cols:
+            text_data.append(row_text)
+            url_data.append(row_url)
 
         # turn into dataframe
         # num_cols = table.td.get('colspan') #  TODO Doesn't seem to be used
