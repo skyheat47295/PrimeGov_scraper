@@ -243,32 +243,49 @@ class PrimeGovScraper(object):
         text_data, url_data = [], []
         for row in table.find_all('tr'):
             row_text, row_url = [], []
-            for index, td in enumerate(row.find_all('td')):
+            for td in row.find_all('td'):
                 row_text.append(''.join(td.stripped_strings))
-                if index == 4 and 'Notice of Cancellation' in td.text:
-                    row_text.extend(['', '', '', '', ''])  # Pad out Cancellation record
-                elif index == 8 and td.text == 'Packet':  # Missing Minutes
-                    row_text[index] = 'Minutes'
-                    row_text.extend(['', '', ''])  # Pad out for blank fields
-                elif index == 12 and td.text == 'Video':  # Missing Packet
-                    row_text[index] = 'Packet'
-                    row_text.extend(['', '', ''])  # Pad out for blank fields
-                elif index == 16 and td.text == '':  # Missing Video
-                    row_text.extend(['', ''])  # Pad out for blank fields
                 if td.find('a') and (td.a.get('href') is not None):
                     row_url.append(self.base_url + td.a.get('href'))
                 else:
                     row_url.append(nan)
-                #if len(row_text) == num_cols and len(row_url) == num_cols:
-            text_data.append(row_text)
-            url_data.append(row_url)
+            # Fix Shape
+
+            def insert_position(position, list1, list2):
+                return list1[:position] + list2 + list1[position:]
+
+            if len(row_text) > 2 and row_text[2] == 'AgendaPacket':
+                row_text = insert_position(8, row_text, ['Minutes', nan, nan, nan])
+                row_text = insert_position(16, row_text, ['Video'])
+                row_url = insert_position(8, row_url, [nan, nan, nan, nan])
+                row_url = insert_position(16, row_url, [nan])
+
+            if len(row_text) > 9 and row_text[2] == 'AgendaVideo':
+                row_text = insert_position(8, row_text, ['Minutes', nan, nan, nan])
+                row_text = insert_position(12, row_text, ['Packet', nan, nan, nan])
+                row_url = insert_position(8, row_url, [nan, nan, nan, nan])
+                row_url = insert_position(12, row_url, [nan, nan, nan, nan])
+
+            if len(row_text) > 13 and row_text[2] == 'AgendaPacketVideo':
+                row_text = insert_position(8, row_text, ['Minutes', nan, nan, nan])
+                row_url = insert_position(8, row_url, [nan, nan, nan, nan])
+
+            if len(row_text) > 4 and (row_text[2] == 'Notice of Cancellation' or row_text[2] == 'Agenda'):
+                row_text.extend([nan, nan, nan, nan, nan, nan, nan, nan, nan])
+                row_url.extend([nan, nan, nan, nan, nan, nan, nan, nan, nan])
+
+                
+            if len(row_text) == num_cols and len(row_url) == num_cols:
+                text_data.append(row_text)
+                url_data.append(row_url)
+
 
         # turn into dataframe
         # num_cols = table.td.get('colspan') #  TODO Doesn't seem to be used
-        # text_df = pd.DataFrame(text_data, columns=header_data)
-        text_df = pd.DataFrame(text_data)
-        # url_df = pd.DataFrame(url_data, columns=header_data)
-        url_df = pd.DataFrame(url_data)
+        text_df = pd.DataFrame(text_data, columns=header_data)
+        # text_df = pd.DataFrame(text_data)
+        url_df = pd.DataFrame(url_data, columns=header_data)
+        # url_df = pd.DataFrame(url_data)
         table_data = pd.merge(
             text_df,
             url_df,
