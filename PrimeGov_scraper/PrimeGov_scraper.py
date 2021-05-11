@@ -58,7 +58,7 @@ class PrimeGovScraper(object):
         """
         Assemble a list of links to result pages.
         """
-        pagelinks_xpath = "//*[@id='2021Meetings_paginate']/span/a"
+        pagelinks_xpath = "//*[@id='2021Meetings_paginate']/span/a"  # Site specific
         pagelinks = driver.find_elements_by_xpath(pagelinks_xpath)
         pagelinks = pagelinks[:int(len(pagelinks))]
         return [l.text for l in pagelinks], pagelinks
@@ -212,7 +212,7 @@ class PrimeGovScraper(object):
     def extract_table_data(
             self,
             page_source,
-            table_id='#\\32 021Meetings'
+            table_id='#\\32 021Meetings'  # Site Specific
     ):
         """
 
@@ -227,18 +227,12 @@ class PrimeGovScraper(object):
         table = soup.select(table_id)[0]
 
         # extract column headers
-        # header_data = [
-        #     ''.join(cell.stripped_strings) for cell in table.find_all('th')
-        # ]
-        # header_data = [h for h in header_data if h != 'Data pager']  # Copied Code Data Pager doesn't seem to exist
-        # header_data.extend(['Agenda', 'Minutes', 'Packet', 'Video']) # TODO Make duplicate rows instead
         header_data = \
-            ['Meeting', 'Date', 'AgendaMinutesPacketVideo',
+            ['Meeting', 'Meeting Date', 'AgendaMinutesPacketVideo',
              '4', 'Agenda', '6', '7', '8', 'Minutes', '10',
-             '11', '12', 'Packet', '14', '15', '16', 'Video', '18']  # TODO automate
-        num_cols = len(header_data)
-        # num_cols = int(table.td.get('colspan')) # TODO remove line
+             '11', '12', 'Packet', '14', '15', '16', 'Video', '18']
 
+        num_cols = len(header_data)
         # extract text and URL data from table
         text_data, url_data = [], []
         for row in table.find_all('tr'):
@@ -259,6 +253,20 @@ class PrimeGovScraper(object):
                 row_text = insert_position(16, row_text, ['Video'])
                 row_url = insert_position(8, row_url, [nan, nan, nan, nan])
                 row_url = insert_position(16, row_url, [nan])
+
+            if len(row_text) > 2 and row_text[2] == 'AgendaMinutes':
+                row_text = insert_position(12, row_text, ['Packet', nan, nan, nan])
+                row_text = insert_position(16, row_text, ['Video'])
+                row_url = insert_position(12, row_url, [nan, nan, nan, nan])
+                row_url = insert_position(16, row_url, [nan])
+
+            if len(row_text) > 2 and row_text[2] == 'AgendaMinutesPacket':
+                row_text = insert_position(16, row_text, ['Video'])
+                row_url = insert_position(16, row_url, [nan])
+
+            if len(row_text) > 12 and row_text[2] == 'AgendaMinutesVideo':
+                row_text = insert_position(12, row_text, ['Packet', nan, nan, nan])
+                row_url = insert_position(12, row_url, [nan, nan, nan, nan])
 
             if len(row_text) > 9 and row_text[2] == 'AgendaVideo':
                 row_text = insert_position(8, row_text, ['Minutes', nan, nan, nan])
@@ -281,7 +289,6 @@ class PrimeGovScraper(object):
 
 
         # turn into dataframe
-        # num_cols = table.td.get('colspan') #  TODO Doesn't seem to be used
         text_df = pd.DataFrame(text_data, columns=header_data)
         # text_df = pd.DataFrame(text_data)
         url_df = pd.DataFrame(url_data, columns=header_data)
@@ -311,13 +318,13 @@ class PrimeGovScraper(object):
             meeting_data = {
                 'city': self.city_name,
                 'date': pd.to_datetime(row['Meeting Date Text']),
-                'committee': row['Name Text'],
-                'doc_format': 'pdf',
-            }
+                'meeting': row['Meeting Text'],
+                }
             url_col_pairs = [
-                ('Agenda', 'Agenda URL'),
-                ('Minutes', 'Minutes URL'),
-                ('Minutes', 'Official Minutes URL')
+                ('Agenda', '6 URL'),
+                ('Minutes', '10 URL'),
+                ('Packet', '14 URL'),
+                ('Video', 'Video URL')
             ]
             for doc_type, url_col in url_col_pairs:
                 try:
@@ -403,7 +410,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-o", "--output_dir",
-        default='../data',
+        default='./data',
         help="Directory where scraping data lives."
     )
     parser.add_argument(
