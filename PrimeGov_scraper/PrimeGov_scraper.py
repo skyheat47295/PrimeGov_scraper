@@ -161,6 +161,7 @@ class PrimeGovScraper(object):
             self._click(search_button) """
 
         # click through pages and save html
+        time.sleep(5)  # TODO solve timing issue
         c = 1
         page_data = []
         while True:
@@ -176,6 +177,7 @@ class PrimeGovScraper(object):
                 pages, pagelinks = self._get_page_links(self.driver)
                 page_signature = self._get_page_signature()
             except NoSuchElementException:
+
                 self._log('scraper: could not find data table on page, '
                          'aborting:'
                     ' {}'.format(self.city_name))
@@ -222,6 +224,7 @@ class PrimeGovScraper(object):
         Returns:
             table_data: a pandas dataframe corresponding to the HTML table
         """
+
         # find table in page
         soup = BeautifulSoup(page_source, features='lxml')
         table = soup.select(table_id)[0]
@@ -321,9 +324,9 @@ class PrimeGovScraper(object):
                 'meeting': row['Meeting Text'],
                 }
             url_col_pairs = [
-                ('Agenda', '6 URL'),
-                ('Minutes', '10 URL'),
-                ('Packet', '14 URL'),
+                ('Agenda', 'Agenda URL'),
+                ('Minutes', 'Minutes URL'),
+                ('Packet', 'Packet URL'),
                 ('Video', 'Video URL')
             ]
             for doc_type, url_col in url_col_pairs:
