@@ -246,7 +246,7 @@ class PrimeGovScraper(object):
                     row_url.append(self.base_url + td.a.get('href'))
                 else:
                     row_url.append(nan)
-            # Fix Shape
+            # Site Specific Fix Shape
 
             def insert_position(position, list1, list2):
                 return list1[:position] + list2 + list1[position:]
@@ -318,6 +318,7 @@ class PrimeGovScraper(object):
 
         doc_list = []
         for i, row in page_data.iterrows():
+            # Site Specific
             meeting_data = {
                 'city': self.city_name,
                 'date': pd.to_datetime(row['Meeting Date Text']),
@@ -332,7 +333,14 @@ class PrimeGovScraper(object):
             for doc_type, url_col in url_col_pairs:
                 try:
                     url = row[url_col]
+
                     if isinstance(url, str):
+                        if url.find('youtube') > 0:  # Site Specific cut out the correct url
+                            url = url[30:]
+                        if url.startswith('https://sanmateo.primegov.com'):
+                            url = \
+                                'https://sanmateo.primegov.com/Portal/Meeting?compiledMeetingDocumentFileId=' + \
+                                url[68:73]
                         row_data = deepcopy(meeting_data)
                         row_data['url'] = url
                         row_data['doc_type'] = doc_type
