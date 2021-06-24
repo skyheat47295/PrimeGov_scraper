@@ -10,7 +10,8 @@ from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import StaleElementReferenceException, \
     NoSuchElementException
-import google_drive_uploader
+import google_drive_uploader  # Import local function
+import Agenda_Report_URL_Scraper  # Import local function
 
 
 class PrimeGovScraper(object):
@@ -438,6 +439,11 @@ if __name__ == '__main__':
         help="Filter by body (optional)."
     )
     parser.add_argument(
+        "-url", "--url_retrieve",
+        default=False,
+        help="Retrieve list of URL's to download"
+    )
+    parser.add_argument(
         "-u", "--upload",
         default=False,
         help="Upload Files to Google Drive"
@@ -467,7 +473,8 @@ if __name__ == '__main__':
         print('Scraping city...', city_args)
         try:
             doc_list_path = scrape_city(save_dir, city_args, filters)
-            # Retrieve list of Agenda Report URL's
+            if args.url_retrieve:
+                Agenda_Report_URL_Scraper.pull_agenda_reports(city_args, save_dir)
 
         except Exception as e:
             # send notification that scraping failed
